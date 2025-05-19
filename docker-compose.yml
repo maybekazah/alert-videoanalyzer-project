@@ -7,7 +7,7 @@ services:
     container_name: django_alert_project
     volumes:
       - ./output_data/:/app/output_data
-      - ./backend/static:/app/static
+      - ./django/static:/app/static
       - ./logs:/app/logs
       - ./ssl:/app/ssl
     restart: always
@@ -16,8 +16,8 @@ services:
              daphne -b 0.0.0.0 -p 8102 base.asgi:application"
     env_file:
       - ./.env
-    # depends_on:
-    #   - postgres
+    depends_on:
+      - postgres
     logging:
       driver: "local"
       options:
@@ -37,7 +37,7 @@ services:
       - ./frontend:/app
       - ./logs:/app/logs
       - ./ssl:/etc/nginx/ssl
-      - ./backend/static:/app/static
+      - ./django/static:/app/static
     restart: always
     depends_on:
       - django
@@ -54,10 +54,224 @@ services:
     networks:
       - alert_project
 
+  redis:
+    image: redis:7.4.2
+    container_name: redis_alert_project
+    restart: always
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - alert_project
+    command: ["redis-server", "--timeout", "300"]
+
+  pgadmin:
+    image: dpage/pgadmin4:8.14.0
+    container_name: pgadmin_alert_project
+    ports:
+      - "5050:80"
+    restart: always
+    depends_on:
+      - postgres
+    env_file:
+      - ./.env
+    volumes:
+      - ./pgadmin:/var/lib/pgadmin
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - alert_project
+
+  balancer:
+    build:
+      context: ./balancer
+      dockerfile: Dockerfile
+    image: balancer:latest
+    ports:
+      - "7676:7676"
+    restart: always
+    networks:
+      - alert_project
+
+  nn_processor:
+    build:
+      context: ./nn_processor
+      dockerfile: Dockerfile
+    image: nn_processor_alert_project:1.0
+    container_name: nn_processor_alert_project
+    command: ["echo", "nn_processor_alert_project base image built"]
+    networks:
+      - alert_project
+
+  nn_processor_1:
+    build:
+      context: ./nn_processor
+      dockerfile: Dockerfile
+    image: nn_processor_alert_project:1.0
+    volumes:
+      - ./logs:/app/logs
+      - ./weights:/app/weights
+    expose:
+      - "8546"
+    env_file:
+      - ./.env
+    depends_on:
+      - django
+    environment:
+      - CONTAINER_ID=1
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+    command: ["sh", "-c", "sleep 0 && python main.py"]
+    networks:
+      - alert_project
+    logging:
+      driver: local
+      options:
+        max-size: "3m"
+        max-file: "2"
+
+  nn_processor_2:
+    build:
+      context: ./nn_processor
+      dockerfile: Dockerfile
+    image: nn_processor_alert_project:1.0
+    volumes:
+      - ./logs:/app/logs
+      - ./weights:/app/weights
+    expose:
+      - "8546"
+    env_file:
+      - ./.env
+    depends_on:
+      - django
+    environment:
+      - CONTAINER_ID=2
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+    command: ["sh", "-c", "sleep 20 && python main.py"]
+    networks:
+      - alert_project
+    logging:
+      driver: local
+      options:
+        max-size: "3m"
+        max-file: "2"
+
+
+  frame_processor:
+    build:
+      context: ./frame_processor
+      dockerfile: Dockerfile
+    image: frame_processor_alert_project:1.0
+    container_name: frame_processor_alert_project
+    command: ["echo", "frame_processor base image built"]
+    networks:
+      - alert_project
+      
+  frame_processor_replica_1:
+    image: frame_processor_alert_project:1.0
+    container_name: frame_processor_replica_1
+    volumes:
+      - ./frame_processor:/app
+      - ./logs:/app/logs
+      - ./output_data:/app/output_data
+      - ./weights:/app/weights
+      - ./test:/app/test
+    env_file:
+      - ./.env
+    environment:
+      - CONTAINER_ID=1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+    command: ["sh", "-c", "sleep 10 && python3 main.py"]
+    networks:
+      - alert_project
+    logging:
+      driver: local
+      options:
+        max-size: "3m"
+        max-file: "2"
+
+  frame_processor_replica_2:
+    image: frame_processor_alert_project:1.0
+    container_name: frame_processor_replica_2
+    volumes:
+      - ./frame_processor:/app
+      - ./logs:/app/logs
+      - ./output_data:/app/output_data
+      - ./weights:/app/weights
+      - ./test:/app/test
+    env_file:
+      - ./.env
+    environment:
+      - CONTAINER_ID=2
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+    command: ["sh", "-c", "sleep 15 && python3 main.py"]
+    networks:
+      - alert_project
+    logging:
+      driver: local
+      options:
+        max-size: "3m"
+        max-file: "2"
+
+        
+  postgres:
+    image: postgres:17
+    container_name: postgres_alert_project
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    restart: always
+    env_file:
+      - ./.env
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - alert_project
 
 volumes:
   django:
-  static:
   ssl:
   logs:
   pgadmin:
