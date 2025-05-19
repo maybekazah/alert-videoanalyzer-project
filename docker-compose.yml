@@ -3,18 +3,21 @@ services:
     build: 
       context: ./django
       dockerfile: Dockerfile
-    image: django:1.0
+    image: django_alert_project:1.0
     container_name: django_alert_project
     volumes:
       - ./output_data/:/app/output_data
       - ./backend/static:/app/static
       - ./logs:/app/logs
-      - ./ssl:/etc/nginx/ssl
+      - ./ssl:/app/ssl
     restart: always
+    command: >
+      sh -c "gunicorn --certfile=/app/ssl/cert.pem --keyfile=/app/ssl/privkey.pem --workers 8 --bind 0.0.0.0:8101 base.wsgi:application --timeout 120 & 
+             daphne -b 0.0.0.0 -p 8102 base.asgi:application"
     env_file:
       - ./.env
-    depends_on:
-      - postgres
+    # depends_on:
+    #   - postgres
     logging:
       driver: "local"
       options:
@@ -23,12 +26,12 @@ services:
     networks:
       - alert_project
 
-  frontend:
+  frontend_alerts:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: frontend:1.0  
-    container_name: frontend_perimeter
+    image: frontend_alert_project:1.0  
+    container_name: frontend_alert_project
     volumes:
       - ./output_data/:/app/output_data
       - ./frontend:/app
@@ -37,7 +40,7 @@ services:
       - ./backend/static:/app/static
     restart: always
     depends_on:
-      - backend
+      - django
     ports:
       # - "80:80"
       - "443:443"
@@ -62,3 +65,6 @@ volumes:
   weights:
   output_data:
   test_data:
+  
+networks:
+  alert_project:
