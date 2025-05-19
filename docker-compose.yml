@@ -1,0 +1,64 @@
+services:
+  django:
+    build: 
+      context: ./django
+      dockerfile: Dockerfile
+    image: django:1.0
+    container_name: django_alert_project
+    volumes:
+      - ./output_data/:/app/output_data
+      - ./backend/static:/app/static
+      - ./logs:/app/logs
+      - ./ssl:/etc/nginx/ssl
+    restart: always
+    env_file:
+      - ./.env
+    depends_on:
+      - postgres
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - alert_project
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: frontend:1.0  
+    container_name: frontend_perimeter
+    volumes:
+      - ./output_data/:/app/output_data
+      - ./frontend:/app
+      - ./logs:/app/logs
+      - ./ssl:/etc/nginx/ssl
+      - ./backend/static:/app/static
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      # - "80:80"
+      - "443:443"
+    env_file:
+      - ./.env
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - alert_project
+
+
+volumes:
+  django:
+  static:
+  ssl:
+  logs:
+  pgadmin:
+  postgres:
+  weights:
+  output_data:
+  test_data:
