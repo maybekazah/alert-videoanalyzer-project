@@ -6,13 +6,13 @@ from django.contrib.auth import authenticate
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from api.configs.logger import setup_logging
+from api_app.configs.logger import setup_logging
 setup_logging()
 import logging
 
 from rest_framework import status
 
-from api.serializers.auth import (
+from api_app.serializers.auth import (
     LoginSerializer,
     LoginResponseSerializer,
     ErrorSerializer,

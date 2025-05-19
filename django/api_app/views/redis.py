@@ -1,5 +1,5 @@
 
-from api.configs.logger import setup_logging
+from api_app.configs.logger import setup_logging
 setup_logging()
 import logging
 
@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from api.providers.provider import Provider
+from api_app.providers.provider import Provider
 
 import redis
 import json

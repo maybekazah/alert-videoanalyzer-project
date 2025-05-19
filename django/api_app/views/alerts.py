@@ -1,4 +1,4 @@
-from api.configs.logger import setup_logging
+from api_app.configs.logger import setup_logging
 setup_logging()
 import logging
 
@@ -14,11 +14,11 @@ from rest_framework import status
 
 from django.http import Http404
 
-from api.serializers.serializers import AlertDataSerializer
-from api.services.auth_for_frame_processor import CustomTokenAuthentication
-from api.services.postgres_db import create_alert_safely
+from api_app.serializers.serializers import AlertDataSerializer
+from api_app.services.auth_for_frame_processor import CustomTokenAuthentication
+from api_app.services.postgres_db import create_alert_safely
 
-from api.models import AlertData, Camera
+from api_app.models import AlertData, Camera
 
 
 class CookieJWTAuthentication(JWTAuthentication):

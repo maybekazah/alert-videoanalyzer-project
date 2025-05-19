@@ -5,15 +5,15 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import status
 
-from api.configs.logger import setup_logging
+from api_app.configs.logger import setup_logging
 setup_logging()
 import logging
 
 from rest_framework import status
 from django.http import Http404
 
-from api.models import Camera
-from api.serializers.serializers import (
+from api_app.models import Camera
+from api_app.serializers.serializers import (
     CameraSerializer
 )
 from drf_spectacular.utils import extend_schema
