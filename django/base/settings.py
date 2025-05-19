@@ -46,7 +46,7 @@ CORS_ALLOW_HEADERS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'api.services.auth_for_frame_processor.CustomTokenAuthentication',   
+        'api_app.services.auth_for_frame_processor.CustomTokenAuthentication',   
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',

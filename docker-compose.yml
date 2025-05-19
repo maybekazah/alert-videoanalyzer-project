@@ -195,7 +195,7 @@ services:
       - ./logs:/app/logs
       - ./output_data:/app/output_data
       - ./weights:/app/weights
-      - ./test:/app/test
+      - ./test_data:/app/test_data
     env_file:
       - ./.env
     environment:
@@ -228,7 +228,7 @@ services:
       - ./logs:/app/logs
       - ./output_data:/app/output_data
       - ./weights:/app/weights
-      - ./test:/app/test
+      - ./test_data:/app/test_data
     env_file:
       - ./.env
     environment:
